@@ -8,7 +8,19 @@
 # https://github.com/P3TERX/Actions-OpenWrt
 # File name: diy-part2.sh
 # Description: OpenWrt DIY script part 2 (After Update feeds)
+##!/bin/bash
 #
+# DIY script for adding custom packages and configurations
+
+# Add luci-app-ua2f plugin
+git clone https://github.com/openwrt/luci-app-ua2f.git package/luci-app-ua2f
+
+# Update feeds and install dependencies
+./scripts/feeds update -a
+./scripts/feeds install luci-app-ua2f
+
+# Optionally, you can select certain packages using menuconfig
+# make menuconfig
 
 # 修改openwrt登陆地址,把下面的192.168.5.1修改成你想要的就可以了
 sed -i 's/192.168.1.1/192.168.31.1/g' package/base-files/files/bin/config_generate

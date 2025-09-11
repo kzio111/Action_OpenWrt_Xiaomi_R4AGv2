@@ -1,6 +1,6 @@
 #
 # 基于 P3TERX Actions-OpenWrt 修改
-# 目标: 小米 4A 千兆版 V2 (R4AGv2) + LEDE 源码 + UA2F 插件
+# 目标: 小米 4A 千兆版 V2 (R4AGv2) + 最新 LEDE 源码 + UA2F 插件
 #
 
 name: Build-LEDE-R4AGv2-UA2F
@@ -19,7 +19,6 @@ on:
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede.git
-  REPO_BRANCH: 20221001
   FEEDS_CONF: LEDE/feeds.conf.default
   CONFIG_FILE: LEDE/light-R4AGv2.config
   DIY_P1_SH: LEDE/light-part1_feeds.sh
@@ -35,7 +34,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04   # ✅ 改成 22.04，减少排队
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout
@@ -54,10 +53,16 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
-    - name: Clone source code
+    - name: Clone or Update source code
       working-directory: /workdir
       run: |
-        git clone --single-branch --branch $REPO_BRANCH $REPO_URL openwrt
+        if [ -d "openwrt" ]; then
+          cd openwrt
+          git reset --hard
+          git pull origin master
+        else
+          git clone --single-branch --branch master $REPO_URL openwrt
+        fi
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: Upload Files for Hardware Changes
@@ -72,7 +77,6 @@ jobs:
     - name: Load custom feeds
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
-        # ✅ 增加 UA2F 源
         echo "src-git ua2f https://github.com/Zxilly/UA2F.git" >> openwrt/feeds.conf.default
         chmod +x $DIY_P1_SH
         cd openwrt
@@ -91,7 +95,6 @@ jobs:
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
-        # ✅ 强制启用 UA2F 及依赖
         echo "CONFIG_PACKAGE_ua2f=y" >> .config
         echo "CONFIG_PACKAGE_luci-app-ua2f=y" >> .config
         echo "CONFIG_PACKAGE_kmod-bpf=y" >> .config
